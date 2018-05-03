@@ -1,3 +1,4 @@
+#coding=utf-8
 #!/usr/bin/python
 import requests
 import sys
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     parser.add_option("-p", "--pno", dest="pno",
                       help="personal number", default = '')
     parser.add_option("-l", "--locations", dest="loc",
-                      help="locations, comma sepreated", default = 'Sollentuna,Norrtälje 2')
+                      help="locations, comma sepreated", default = u'Sollentuna,Norrtälje 2')
 
     parser.add_option("-s", "--secret", dest="tkn",
                       help="slack secret token", default = '')
