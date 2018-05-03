@@ -4,15 +4,8 @@ import sys
 import json
 from optparse import OptionParser
 from datetime import datetime
+#from datetime import date
 from slacker import Slacker
-
-
-#locations = ['Sollentuna','Norrtälje 2']
-
-closest_o = None
-
-from_date = datetime(2018,3,21)
-to_date = datetime(2018,4,30)
 
 
 headers = { 'Cookie' : 'FpsExternalIdentity=5E9B30DC76D67400DC3C3186FC26E49C941CBA2865BD32DF8162E789CF418CD6194BB20A242628AD35EFC018758D43B8630BD4EE126056C18B002DF191ED5743E6C20F9627E00E18A35DC7EAB343746DC0746D6FFE2549BD441F289B7363012C70722E68009063A2B2E0E31F0F1B02FC6BFA398F2F70EEF578EE8331BB2097CE39168FBC3C5C6AB2B9978508F5DF2F47; _ga=GA1.2.827753902.1505159041; _gid=GA1.2.1445140.1505551432',
@@ -32,7 +25,8 @@ def slack_fmt(o):
     return "%s, *%s* >> %s, :moneybag: %s" % (o['date'], o['time'], o['locationName'], o['cost'])
 
 
-def filter_booking(pno, locationId, slack):
+def filter_booking(pno, locationId, slack, from_date, to_date):
+    closest_o = None
     closest = datetime.strptime('2030-12-31T00:00:00', '%Y-%m-%dT%H:%M:%S')
     targets=[]
 
@@ -94,8 +88,14 @@ if __name__ == '__main__':
     parser.add_option("-l", "--locations", dest="loc",
                       help="locations, comma sepreated", default = 'Sollentuna,Norrtälje 2')
 
-    parser.add_option("-t", "--token", dest="tkn",
-                      help="slack token", default = '')
+    parser.add_option("-s", "--secret", dest="tkn",
+                      help="slack secret token", default = '')
+
+    parser.add_option("-t", "--to", dest="todate",
+                      help="to date,  2018-04-07", default = '')
+
+    parser.add_option("-f", "--from", dest="fromdate",
+                      help="from date, 2018-03-12", default = 'now')
 
     (options, args) = parser.parse_args()
 
@@ -106,6 +106,13 @@ if __name__ == '__main__':
     token = options.tkn
     assert(token!='')
 
+    if 'now' == options.fromdate:
+        from_date = datetime.now()
+    else:
+        from_date = datetime.strptime(options.fromdate, "%Y-%m-%d")
+
+    to_date = datetime.strptime(options.todate, "%Y-%m-%d")
+
     slack = Slacker(token)
 
     for l in get_locations_objs(pno):
@@ -113,6 +120,6 @@ if __name__ == '__main__':
             loc_id = l['id']
             print("targeting for %s in %s" % (pno,  loc_id))
             try:
-                filter_booking(pno, loc_id, slack)
+                filter_booking(pno, loc_id, slack, from_date, to_date)
             except Exception as e:
                 print("Oops fail to filter bookings", str(e))
