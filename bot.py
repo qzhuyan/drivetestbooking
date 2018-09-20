@@ -26,12 +26,12 @@ def slack_fmt(o):
     return "%s, *%s* >> %s, :moneybag: %s" % (o['date'], o['time'], o['locationName'], o['cost'])
 
 
-def filter_booking(pno, locationId, slack, from_date, to_date):
+def filter_booking(pno, locationId, slack, from_date, to_date, vehicle=2):
     closest_o = None
     closest = datetime.strptime('2030-12-31T00:00:00', '%Y-%m-%dT%H:%M:%S')
     targets=[]
 
-    payload = {'occasionBundleQuery': {'vehicleTypeId': 2, 'startDate': '2018-03-20T22:00:00.000Z', 'tachographTypeId': 1, 'occasionChoiceId': 1, 'languageId': 4, 'locationId': locationId, 'examinationTypeId': 0}, 'bookingSession': {'examinationTypeId': 12, 'licenceId': 5, 'ignoreDebt': False, 'socialSecurityNumber': pno, 'bookingModeId': 0}}
+    payload = {'occasionBundleQuery': {'vehicleTypeId': vehicle, 'startDate': '2018-03-20T22:00:00.000Z', 'tachographTypeId': 1, 'occasionChoiceId': 1, 'languageId': 4, 'locationId': locationId, 'examinationTypeId': 0}, 'bookingSession': {'examinationTypeId': 12, 'licenceId': 5, 'ignoreDebt': False, 'socialSecurityNumber': pno, 'bookingModeId': 0}}
 
 
     resp = requests.post("https://fp.trafikverket.se/Boka/occasion-bundles",
@@ -98,6 +98,11 @@ if __name__ == '__main__':
     parser.add_option("-f", "--from", dest="fromdate",
                       help="from date, 2018-03-12", default = 'now')
 
+    parser.add_option("-v", "--vehicle", dest="vehicle",
+                      type="int",
+                      help="vehicle type: 2:manual 4:auto", default = 2)
+
+
     (options, args) = parser.parse_args()
 
     pno = options.pno
@@ -106,7 +111,7 @@ if __name__ == '__main__':
     assert(len(locations) != 0)
     token = options.tkn
     assert(token!='')
-
+    vehicle = options.vehicle
     if 'now' == options.fromdate:
         from_date = datetime.now()
     else:
@@ -121,6 +126,6 @@ if __name__ == '__main__':
             loc_id = l['id']
             print("targeting for %s in %s" % (pno,  loc_id))
             try:
-                filter_booking(pno, loc_id, slack, from_date, to_date)
+                filter_booking(pno, loc_id, slack, from_date, to_date, vehicle)
             except Exception as e:
                 print("Oops fail to filter bookings", str(e))
