@@ -26,7 +26,7 @@ def slack_fmt(o):
     return "%s, *%s* >> %s, :moneybag: %s" % (o['date'], o['time'], o['locationName'], o['cost'])
 
 
-def filter_booking(pno, locationId, slack, from_date, to_date, vehicle=2):
+def filter_booking(pno, locationId, slack, from_date, to_date, user, vehicle=2):
     closest_o = None
     closest = datetime.strptime('2030-12-31T00:00:00', '%Y-%m-%dT%H:%M:%S')
     targets=[]
@@ -55,11 +55,11 @@ def filter_booking(pno, locationId, slack, from_date, to_date, vehicle=2):
                 if (available_slot > from_date) and (available_slot < to_date ):
                     targets.append(o)
                 if (o['increasedFee'] == True or o['increasedFee'] == "True"):
-                    msg1 = ":omg-panda: , we find a spot in weekend! @william *%s* :omg-panda:" % (json.dumps(o))
+                    msg1 = ":omg-panda: , we find a spot in weekend! @%s *%s* :omg-panda:" % (user, json.dumps(o))
                     slack.chat.post_message('#general', msg1, parse='full')
 
         if len(targets) != 0:
-            msg1 = ":omg-panda: :car: :car: :car: @william \n %s" % ('\n'.join([ slack_fmt(t) for t in targets]))
+            msg1 = ":omg-panda: :car: :car: :car: @%s \n %s" % (user, '\n'.join([ slack_fmt(t) for t in targets]))
             slack.chat.post_message('#general', msg1, parse='full')
 
         msg = "closest date: *%s* \n %s" % (str(closest), json.dumps(closest_o))
@@ -102,6 +102,10 @@ if __name__ == '__main__':
                       type="int",
                       help="vehicle type: 2:manual 4:auto", default = 2)
 
+    parser.add_option("-u", "--user", dest="user",
+                      type="string",
+                      help="@user", default = 'here')
+
 
     (options, args) = parser.parse_args()
 
@@ -120,12 +124,13 @@ if __name__ == '__main__':
     to_date = datetime.strptime(options.todate, "%Y-%m-%d")
 
     slack = Slacker(token)
+    user = options.user
 
     for l in get_locations_objs(pno):
         if l['name'] in locations:
             loc_id = l['id']
             print("targeting for %s in %s" % (pno,  loc_id))
             try:
-                filter_booking(pno, loc_id, slack, from_date, to_date, vehicle)
+                filter_booking(pno, loc_id, slack, from_date, to_date, user, vehicle)
             except Exception as e:
                 print("Oops fail to filter bookings", str(e))
