@@ -10,5 +10,4 @@ requirements:
 
 
 run:
-	. venv/bin/activate
-	python bot.py
+	venv/bin/python bot.py
