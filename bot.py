@@ -4,6 +4,7 @@ import requests
 import sys
 import time
 import json
+import traceback
 from optparse import OptionParser
 from datetime import datetime
 #from datetime import date
@@ -62,9 +63,10 @@ def filter_booking(pno, locationId, from_date, to_date, vehicle=2):
         }
 
 def check_throttle(length):
-    resp = requests.get("https://api.keyvalue.xyz/3e93f797/lastts")
+    resp = requests.get("https://api.keyvalue.xyz/f62b8769/lastts")
     if float(resp.text) + length < time.time():
-        requests.post("https://api.keyvalue.xyz/3e93f797/lastts/%s" % (int(time.time())))
+        #@todo handle exipred key 
+        requests.post("https://api.keyvalue.xyz/f62b8769/lastts/%s" % (int(time.time())))
         return True
     else:
         return False
@@ -106,13 +108,14 @@ def notify_user(result, slack_user, slack, sms_number = None, sms_server = None)
     # notify weekend bomb!
     for o in result['weekends']:
         msg = ":omg-panda: , we find a spot in weekend! @%s *%s* :omg-panda:" % (slack_user, json.dumps(o))
-        slack_notify(slack, '#general', msg1, parse='full')
+        slack_notify(slack, '#general', msg, parse='full')
 
     # notify target hits
     if len(result['targets']) != 0:
+        targets = result['targets']
         msg = ":omg-panda: :car: :car: :car: @%s \n %s" % (slack_user, '\n'.join([ slack_fmt(t) for t in targets]))
-        slack_notify(slack, '#general', msg1, parse='full')
-        maybe_sms_notify(slack, "Hello, we find at least one available slot for you:" ++ slack_fmt(targets[0]))
+        slack_notify(slack, '#general', msg, parse='full')
+        maybe_sms_notify(slack, "Hello, we find at least one available slot for you: %s" % ( slack_fmt(targets[0])))
 
     ## liveness notify, server side
     closest_o = result['closest']
@@ -196,3 +199,5 @@ if __name__ == '__main__':
                 notify_user(result, slack_user, slack, options.mobile, nexmo)
             except Exception as e:
                 print("Oops fail to filter bookings", str(e))
+                print(traceback.format_exc())
+
