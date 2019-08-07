@@ -110,7 +110,7 @@ def notify_user(result, slack_user, slack, sms_number = None, sms_server = None)
 
     # notify target hits
     if len(result['targets']) != 0:
-        msg = ":omg-panda: :car: :car: :car: @%s \n %s" % (user, '\n'.join([ slack_fmt(t) for t in targets]))
+        msg = ":omg-panda: :car: :car: :car: @%s \n %s" % (slack_user, '\n'.join([ slack_fmt(t) for t in targets]))
         slack_notify(slack, '#general', msg1, parse='full')
         maybe_sms_notify(slack, "Hello, we find at least one available slot for you:" ++ slack_fmt(targets[0]))
 
